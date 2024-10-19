@@ -9,8 +9,8 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.FileOutputStream;
 import java.security.Key;
+import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.KeySpec;
 import java.util.Date;
@@ -54,29 +54,31 @@ public class IfoodOrderSimulation {
                 return;
             }
 
-            // 5. Derivação de chave de sessão usando PBKDF2
-            byte[] salt = "randomSalt".getBytes(); // Em prática, use um salt seguro e aleatório
+            // 5. Derivação de chave de sessão usando PBKDF2 com salt dinâmico
+            byte[] salt = generateSalt();
             Key sessionKey = deriveKey(codigoTOTP, salt);
 
-            // 6. Cifrar comprovante de pagamento usando AES-GCM
+            // 6. Geração de IV dinâmico para AES-GCM
+            byte[] iv = generateIv();
+
+            // Cifrar comprovante de pagamento usando AES-GCM
             String comprovante = "Comprovante de pagamento";
-            byte[] iv = new byte[12]; // GCM requer um IV de 12 bytes; use um gerador seguro
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
             cipher.init(Cipher.ENCRYPT_MODE, sessionKey, new GCMParameterSpec(128, iv));
             byte[] cipherText = cipher.doFinal(comprovante.getBytes());
             System.out.println("Comprovante cifrado: " + Base64.toBase64String(cipherText));
 
-            // 7. Decifrar comprovante e enviar pedido
+            // Decifrar comprovante e enviar pedido
             cipher.init(Cipher.DECRYPT_MODE, sessionKey, new GCMParameterSpec(128, iv));
             byte[] plainText = cipher.doFinal(cipherText);
             System.out.println("Comprovante decifrado: " + new String(plainText));
 
-            // 8. Enviar mensagem cifrada sobre horário do pedido
+            // Enviar mensagem cifrada sobre horário do pedido
             String mensagem = "Seu pedido será entregue em 30 minutos.";
             cipher.init(Cipher.ENCRYPT_MODE, sessionKey, new GCMParameterSpec(128, iv));
             byte[] mensagemCifrada = cipher.doFinal(mensagem.getBytes());
 
-            // 9. Decifrar mensagem para exibição
+            // Decifrar mensagem para exibição
             cipher.init(Cipher.DECRYPT_MODE, sessionKey, new GCMParameterSpec(128, iv));
             byte[] mensagemDecifrada = cipher.doFinal(mensagemCifrada);
             System.out.println("Mensagem recebida: " + new String(mensagemDecifrada));
@@ -105,5 +107,17 @@ public class IfoodOrderSimulation {
         long secondsSinceEpoch = now.getTime() / 1000;
         String token = JWT.create().withClaim("totp", secondsSinceEpoch).sign(algorithm);
         return token;
+    }
+
+    private static byte[] generateSalt() {
+        byte[] salt = new byte[16]; // 16 bytes = 128 bits de salt
+        new SecureRandom().nextBytes(salt);
+        return salt;
+    }
+
+    private static byte[] generateIv() {
+        byte[] iv = new byte[12]; // IV de 12 bytes recomendado para GCM
+        new SecureRandom().nextBytes(iv);
+        return iv;
     }
 }
