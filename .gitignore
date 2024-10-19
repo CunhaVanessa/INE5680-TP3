@@ -1,0 +1,59 @@
+# Ignore arquivos e diretórios gerados pelo Maven
+/target/
+!*/src/main/**/target/
+!*/src/test/**/target/
+
+# Ignore arquivos de log
+*.log
+
+# Ignore arquivos de configuração do ambiente
+*.env
+
+# Ignore arquivos específicos do sistema operacional e do ambiente de desenvolvimento
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Arquivos temporários do Editor de Texto
+.TemporaryItems
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+# VS Code
+.vscode/
+.history/
+
+# IDEs/Editors
+/.idea/
+/*.iml
+.classpath
+.project
+.settings/
+/*.ipr
+/*.iws
+
+# Arquivos compilados
+*.class
+
+# Arquivos de pacotes
+*.jar
+*.war
+*.ear
+
+# Arquivos de configuração de ambiente virtual (macOS)
+venv/
+env/
+.virtualenv/
+__pycache__/
+
+# Arquivos de cache do Maven
+.m2/
+.mvn/
