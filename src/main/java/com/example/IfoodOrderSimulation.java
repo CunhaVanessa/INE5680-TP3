@@ -4,17 +4,27 @@ import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.bouncycastle.util.encoders.Base64;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.JWT;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.KeySpec;
 import java.util.Date;
 import java.util.Scanner;
+import javax.imageio.ImageIO;
 
 public class IfoodOrderSimulation {
 
@@ -35,12 +45,13 @@ public class IfoodOrderSimulation {
             System.out.println("Digite seu número de celular: ");
             String celular = scanner.nextLine();
 
-            // 3. Geração de TOTP
+            // 3. Geração de TOTP e QR Code
             String secret = generateSecret();
             String token = generateTotp(secret);
 
-            // Exibir TOTP no console (simples)
-            System.out.println("Código TOTP: " + token);
+            // Gerar e exibir QR Code para o usuário
+            generateQrCode(token, "qrcode.png");
+            System.out.println("QR Code gerado e salvo como 'qrcode.png'. Escaneie para visualizar o código TOTP.");
 
             // 4. Validação do código TOTP
             System.out.println("Digite o código TOTP gerado: ");
@@ -119,5 +130,18 @@ public class IfoodOrderSimulation {
         byte[] iv = new byte[12]; // IV de 12 bytes recomendado para GCM
         new SecureRandom().nextBytes(iv);
         return iv;
+    }
+
+    private static void generateQrCode(String data, String filePath) {
+        try {
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            BitMatrix bitMatrix = qrCodeWriter.encode(data, BarcodeFormat.QR_CODE, 200, 200);
+            BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
+            File qrFile = new File(filePath);
+            ImageIO.write(qrImage, "PNG", qrFile);
+            System.out.println("QR Code gerado com sucesso.");
+        } catch (WriterException | IOException e) {
+            System.err.println("Erro ao gerar QR Code: " + e.getMessage());
+        }
     }
 }

@@ -11,28 +11,21 @@
     <description>Simulação de pedido iFood com 2FA e criptografia</description>
 
     <dependencies>
-        <!-- Bouncy Castle FIPS -->
+        <!-- Dependência para Bouncy Castle -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bc-fips</artifactId>
             <version>1.0.2.3</version>
         </dependency>
 
-        <!-- Auth0 JWT Library for Token Generation -->
+        <!-- Dependência para Auth0 JWT -->
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
             <version>3.19.2</version>
         </dependency>
 
-        <!-- Commons Codec for Base64 encoding -->
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.15</version>
-        </dependency>
-
-        <!-- ZXing for QR Code generation -->
+        <!-- Dependências para ZXing (geração de QR Codes) -->
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
@@ -43,11 +36,17 @@
             <artifactId>javase</artifactId>
             <version>3.4.1</version>
         </dependency>
+
+        <!-- Dependência para Commons Codec -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.15</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -57,8 +56,6 @@
                     <target>17</target>
                 </configuration>
             </plugin>
-
-            <!-- Maven Exec Plugin for running the application -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

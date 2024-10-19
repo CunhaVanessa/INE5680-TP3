@@ -57,3 +57,6 @@ __pycache__/
 # Arquivos de cache do Maven
 .m2/
 .mvn/
+
+# QR Code gerado em png
+*.png/
