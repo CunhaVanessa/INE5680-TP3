@@ -3,8 +3,6 @@ package com.example;
 import org.apache.commons.codec.binary.Base32;
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.bouncycastle.util.encoders.Base64;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.JWT;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -18,12 +16,15 @@ import javax.crypto.spec.SecretKeySpec;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.KeySpec;
-import java.util.Date;
 import java.util.Scanner;
+import javax.crypto.Mac;
 import javax.imageio.ImageIO;
 
 public class IfoodOrderSimulation {
@@ -97,7 +98,6 @@ public class IfoodOrderSimulation {
             scanner.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -165,12 +165,43 @@ public class IfoodOrderSimulation {
         return secretKey.replace("=", "");
     }
 
-    private static String generateTotp(String secret) {
-        Algorithm algorithm = Algorithm.HMAC256(secret);
-        Date now = new Date();
-        long secondsSinceEpoch = now.getTime() / 1000;
-        String token = JWT.create().withClaim("totp", secondsSinceEpoch).sign(algorithm);
-        return token;
+    private static String generateTotp(String secret) throws InvalidKeyException {
+        long timeStep = 30; // Intervalo de 30 segundos
+        long currentTimeSeconds = System.currentTimeMillis() / 1000L;
+        long counter = currentTimeSeconds / timeStep;
+
+        try {
+            // Decodifica a chave secreta de Base32 para bytes
+            Base32 base32 = new Base32();
+            byte[] decodedKey = base32.decode(secret);
+
+            // Converte o contador para bytes
+            byte[] data = ByteBuffer.allocate(8).putLong(counter).array();
+
+            // Cria um HMAC-SHA256 com a chave secreta
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec signKey = new SecretKeySpec(decodedKey, "HmacSHA256");
+            mac.init(signKey);
+
+            // Calcula o HMAC do contador
+            byte[] hmacResult = mac.doFinal(data);
+
+            // Dinâmico Truncation: usa os últimos 4 bits do último byte do HMAC para definir o offset
+            int offset = hmacResult[hmacResult.length - 1] & 0xf;
+
+            // Pega 4 bytes do HMAC começando no offset
+            int binaryCode = (hmacResult[offset] & 0x7f) << 24
+                    | (hmacResult[offset + 1] & 0xff) << 16
+                    | (hmacResult[offset + 2] & 0xff) << 8
+                    | (hmacResult[offset + 3] & 0xff);
+
+            // Gera o código de 6 dígitos
+            int otp = binaryCode % 1_000_000;
+            return String.format("%06d", otp); // Retorna com 6 dígitos
+
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException("Erro ao gerar o TOTP", e);
+        }
     }
 
     private static byte[] generateIv() {
