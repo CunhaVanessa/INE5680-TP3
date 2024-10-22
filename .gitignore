@@ -59,4 +59,4 @@ __pycache__/
 .mvn/
 
 # QR Code gerado em png
-*.png/
+*.png
