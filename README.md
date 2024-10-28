@@ -14,7 +14,7 @@ O projeto IfoodOrderSimulation é uma aplicação Java que simula um sistema de 
 ## Funcionalidades:
 1. Escolha de Prato: O usuário inicia o processo selecionando o prato de comida desejado.
 2. Solicitação de Celular: O sistema solicita o número de celular do usuário para criar o pedido e associar com a autenticação de dois fatores.
-3. Geração de Código TOTP: Um código TOTP (Time-Based One-Time Password) é gerado dinamicamente e exibido ao usuário, simulando um segundo fator de autenticação.
+3. Geração de Código TOTP: Um código TOTP (Time-Based One-Time Password) é gerado dinamicamente e exibido ao usuário via QR Code em formato em PNG, é necessário lê-lo com o smartphone para realizar a autenticaçãao.
 4. Validação do Código TOTP: O sistema espera que o usuário insira o código TOTP gerado. Se o código estiver correto, a autenticação de dois fatores é validada com sucesso.
 5. Criptografia de Dados de Pagamento: Usando o algoritmo AES-GCM, o sistema criptografa os dados de pagamento, garantindo segurança durante a transmissão e armazenamento das informações.
 6. Decifração de Dados: O sistema decifra os dados de pagamento para verificar se a criptografia e decifragem funcionam corretamente, garantindo que a informação foi transmitida de forma segura.
