@@ -7,9 +7,9 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import de.taimos.totp.TOTP;
 
 import javax.crypto.Cipher;
-import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
@@ -19,13 +19,13 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.KeySpec;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.codec.binary.Hex;
 
 public class Server {
     static {
@@ -119,25 +119,13 @@ public class Server {
         return base32.encodeToString(secretKeyBytes).replace("=", "");
     }
 
-    public String generateTotp(String secret) throws Exception {
-        long timeStep = 30;
-        long currentTimeSeconds = System.currentTimeMillis() / 1000L;
-        long counter = currentTimeSeconds / timeStep;
-        Base32 base32 = new Base32();
-        byte[] decodedKey = base32.decode(secret);
-        byte[] data = ByteBuffer.allocate(8).putLong(counter).array();
-        Mac mac = Mac.getInstance("HmacSHA256");
-        SecretKeySpec signKey = new SecretKeySpec(decodedKey, "HmacSHA256");
-        mac.init(signKey);
-        byte[] hmacResult = mac.doFinal(data);
-        int offset = hmacResult[hmacResult.length - 1] & 0xf;
-        int binaryCode = (hmacResult[offset] & 0x7f) << 24
-                | (hmacResult[offset + 1] & 0xff) << 16
-                | (hmacResult[offset + 2] & 0xff) << 8
-                | (hmacResult[offset + 3] & 0xff);
-        return String.format("%06d", binaryCode % 1_000_000);
-    }
+    public static String generateTotp(String secret) {
+            Base32 base32 = new Base32();
+            byte[] bytes = base32.decode(secret);
+            String hexKey = Hex.encodeHexString(bytes);
+            return TOTP.getOTP(hexKey);
 
+        }
     public void generateQrCode(String data, String filePath) throws WriterException, IOException {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(data, BarcodeFormat.QR_CODE, 200, 200);
