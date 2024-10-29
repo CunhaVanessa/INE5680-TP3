@@ -5,7 +5,7 @@ O projeto `IfoodOrderSimulation` foi desenvolvido para demonstrar conceitos avan
 
 ## Autores:
 - Vanessa Cunha (17100926)
-- Feline Neves Dias (18100850)
+- Felipe Neves Dias (18100850)
 
 ## Descrição:
 O `IfoodOrderSimulation` é uma aplicação Java que simula um sistema de pedidos do iFood com segurança, incluindo 2FA usando TOTP e criptografia de mensagens, protegendo dados dos usuários em pedidos online.

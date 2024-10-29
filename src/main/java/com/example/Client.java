@@ -9,6 +9,7 @@ import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
 import java.net.Socket;
 import java.security.Key;
+import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Scanner;
 
@@ -63,29 +64,27 @@ public class Client {
             // Derivar a chave de sessão
             Key sessionKey = deriveKey(codigoTOTP, celular.getBytes());
 
-            // Recebe o IV final do servidor
-            byte[] finalIv = Base64.decode(input.readUTF());
-
-            // 3. Solicitar comprovante de pagamento e enviar para cifragem
+            // 3. Solicitar comprovante de pagamento e cifrar com a chave de sessão antes de enviar
             System.out.println("Digite o comprovante de pagamento: ");
             String comprovante = scanner.nextLine();
-            output.writeUTF(comprovante);
+
+            // Gera um novo IV para o comprovante e cifra com a chave de sessão
+            byte[] iv = new byte[GCM_IV_LENGTH];
+            new SecureRandom().nextBytes(iv);
+            byte[] encryptedComprovante = encryptData(comprovante.getBytes(), sessionKey, iv);
+
+            // Envia o IV e o comprovante cifrado para o servidor
+            output.writeUTF(Base64.toBase64String(iv)); // Envia o IV usado na cifragem
+            output.writeUTF(Base64.toBase64String(encryptedComprovante)); // Envia o comprovante cifrado
             output.flush();
-
-            // Recebe o comprovante cifrado do servidor
-            String encryptedComprovante = input.readUTF();
-            System.out.println("Comprovante cifrado: " + encryptedComprovante);
-
-            // Descriptografa o comprovante cifrado
-            byte[] decryptedComprovante = decryptData(Base64.decode(encryptedComprovante), sessionKey, finalIv);
-            System.out.println("Comprovante decifrado: " + new String(decryptedComprovante));
+            System.out.println("Comprovante cifrado enviado.");
 
             // Recebe e exibe a mensagem cifrada sobre o pedido
             String mensagemCifrada = input.readUTF();
             System.out.println("Mensagem cifrada sobre o pedido: " + mensagemCifrada);
 
             // Descriptografa a mensagem cifrada sobre o pedido
-            byte[] decryptedMessage = decryptData(Base64.decode(mensagemCifrada), sessionKey, finalIv);
+            byte[] decryptedMessage = decryptData(Base64.decode(mensagemCifrada), sessionKey, iv);
             System.out.println("Mensagem decifrada sobre o pedido: " + new String(decryptedMessage));
 
             scanner.close();
@@ -120,7 +119,15 @@ public class Client {
         return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
 
-    // Método de descriptografia de dados atualizado
+    // Método de cifragem de dados
+    public static byte[] encryptData(byte[] data, Key key, byte[] iv) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
+        cipher.init(Cipher.ENCRYPT_MODE, key, gcmParameterSpec);
+        return cipher.doFinal(data);
+    }
+
+    // Método de descriptografia de dados
     public static byte[] decryptData(byte[] encryptedData, Key key, byte[] iv) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);

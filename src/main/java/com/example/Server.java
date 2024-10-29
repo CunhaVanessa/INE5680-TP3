@@ -1,4 +1,3 @@
-// Server.java
 package com.example;
 
 import org.apache.commons.codec.binary.Base32;
@@ -82,19 +81,17 @@ public class Server {
                 }
 
                 Key sessionKey = deriveKey(codigoTOTP, salt);
-                byte[] initialIv = generateInitialIv();
-                byte[] finalIv = deriveFinalIv(initialIv, codigoTOTP, salt);
 
-                // Envia o IV final para o cliente
-                output.writeUTF(Base64.toBase64String(finalIv));
+                // Recebe o IV e o comprovante cifrado do cliente
+                byte[] iv = Base64.decode(input.readUTF());
+                byte[] encryptedComprovante = Base64.decode(input.readUTF());
 
-                // Recebe o comprovante do cliente e o cifra
-                String comprovante = input.readUTF();
-                byte[] encryptedComprovante = encryptData(comprovante, sessionKey, finalIv);
-                output.writeUTF(Base64.toBase64String(encryptedComprovante));
+                // Decifra o comprovante usando o IV e a chave de sessão
+                String comprovanteDecifrado = decryptData(encryptedComprovante, sessionKey, iv);
+                System.out.println("Comprovante decifrado: " + comprovanteDecifrado);
 
-                // Envia a mensagem cifrada sobre o pedido
-                byte[] mensagemCifrada = encryptData(tempoEntrega, sessionKey, finalIv);
+                // Cifra e envia uma mensagem ao cliente com o tempo de entrega
+                byte[] mensagemCifrada = encryptData(tempoEntrega.getBytes(), sessionKey, iv);
                 output.writeUTF(Base64.toBase64String(mensagemCifrada));
             } catch (Exception e) {
                 e.printStackTrace();
@@ -155,40 +152,15 @@ public class Server {
         return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
 
-    public byte[] generateInitialIv() {
-        byte[] iv = new byte[12];  // AES-GCM recomenda um IV de 96 bits (12 bytes)
-        SecureRandom secureRandom = new SecureRandom();
-        secureRandom.nextBytes(iv);
-        return iv;
-    }
-
-    public byte[] deriveFinalIv(byte[] initialIv, String codigoTOTP, byte[] salt) throws Exception {
-        ByteBuffer buffer = ByteBuffer.allocate(initialIv.length + codigoTOTP.getBytes().length + salt.length);
-        buffer.put(initialIv);
-        buffer.put(codigoTOTP.getBytes());
-        buffer.put(salt);
-        byte[] data = buffer.array();
-    
-        Mac hmac = Mac.getInstance("HmacSHA256");
-        SecretKeySpec keySpec = new SecretKeySpec(salt, "HmacSHA256");
-        hmac.init(keySpec);
-        byte[] hmacResult = hmac.doFinal(data);
-    
-        byte[] finalIv = new byte[12];
-        System.arraycopy(hmacResult, 0, finalIv, 0, finalIv.length);
-    
-        return finalIv;
-    }
-
-    public byte[] encryptData(String data, Key key, byte[] iv) throws Exception {
+    public byte[] encryptData(byte[] data, Key key, byte[] iv) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv));
-        return cipher.doFinal(data.getBytes());
+        return cipher.doFinal(data);
     }
 
-    public String decryptData(byte[] data, Key key, byte[] iv) throws Exception {
+    public String decryptData(byte[] encryptedData, Key key, byte[] iv) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
-        return new String(cipher.doFinal(data));
+        return new String(cipher.doFinal(encryptedData));
     }
 }
