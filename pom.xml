@@ -1,69 +1,61 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.example</groupId>
     <artifactId>IfoodOrderSimulation</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-
-    <name>IfoodOrderSimulation</name>
-    <description>Simulação de pedido iFood com 2FA e criptografia</description>
 
     <dependencies>
-        <!-- Dependência para Bouncy Castle -->
+        <!-- Bouncy Castle para criptografia -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bc-fips</artifactId>
-            <version>1.0.2.3</version>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.70</version>
         </dependency>
 
-        <!-- Dependência para Auth0 JWT -->
-        <dependency>
-            <groupId>com.auth0</groupId>
-            <artifactId>java-jwt</artifactId>
-            <version>3.19.2</version>
-        </dependency>
-
-        <!-- Dependências para ZXing (geração de QR Codes) -->
-        <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>core</artifactId>
-            <version>3.4.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>javase</artifactId>
-            <version>3.4.1</version>
-        </dependency>
-
-        <!-- Dependência para Commons Codec -->
+        <!-- Apache Commons Codec para codificação Base32 e Base64 -->
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>1.15</version>
         </dependency>
+
+        <!-- ZXing para geração de QR Codes -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.4.1</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Plugin para compilar o código -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <source>8</source>
+                    <target>8</target>
                 </configuration>
             </plugin>
+
+            <!-- Plugin para executar classes Java diretamente pelo Maven -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
-                    <mainClass>com.example.IfoodOrderSimulation</mainClass>
+                    <mainClass>${exec.mainClass}</mainClass>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <properties>
+        <!-- Define a classe principal para facilitar a execução -->
+        <exec.mainClass>com.example.Client</exec.mainClass>
+    </properties>
 </project>
